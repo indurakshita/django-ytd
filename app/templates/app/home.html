@@ -1,0 +1,86 @@
+{% extends 'index/base.html' %}
+
+{% block content %}
+<div class="container mt-5 mb-5 text-center">
+    {% if not title %}
+    <form method="post" action="">
+        <h2>YouTube Video Downloader</h2>
+        {% csrf_token %}
+        <div class="form-group">
+            <input type="text" class="form-control form-control-sm" name="video_url" id="video_url" placeholder="e.g., https://www.youtube.com/watch?v=your_video_id">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm mt-3">Download</button>
+    </form>
+    
+    <!-- Filler content for the landing page -->
+    <div class="mt-5">
+        <h4>Welcome to our YouTube Video Downloader!</h4>
+        <p>Select a YouTube video URL above, and you can download it in various formats.</p>
+        <p>Get started now!</p>
+        <p>Pro tip: You can copy the video URL directly from your browser's address bar.</p>
+        <p>Supported formats include MP4, 3GP, and more. Choose the one that suits you best!</p>
+    </div>
+    
+    {% endif %}
+
+    {% if title %}
+    <h3>{{ title }}</h3>
+    <img src="{{ thumbnail }}" alt="{{ title }}" class="img-fluid mt-3 mb-3">
+
+    <select class="form-control form-control-sm shadow" id="format_selector">
+        <option value="all">All Formats</option>
+        {% for stream in streams %}
+          <option value="{{ stream.mime_type }}|{{ stream.filesize_mb }}">{{ stream.mime_type }} - {{ stream.filesize_mb }} MB</option>
+        {% endfor %}
+    </select>
+
+    <div class="container" style="max-height: 500px; overflow: auto;">
+        <div class="card-deck mt-3" id="format_cards">
+            {% for stream in streams %}
+            <div class="card format-card mt-3 shadow" data-mime="{{ stream.mime_type }}" data-size="{{ stream.filesize_mb }}">
+                <div class="card-body">
+                    <h5 class="card-title">Format: {{ stream.type|title }}</h5>
+                    <p class="card-text">Filesize: {{ stream.filesize_mb }} MB</p>
+                    <p class="card-text">Type: {{ stream.mime_type }}</p>
+                    <a href="{{ stream.url }}" class="btn btn-primary btn-sm" target="_blank">View/Download</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // Hide the form when cards have been loaded
+        var form = document.querySelector('form');
+        var formatSelector = document.getElementById('format_selector');
+        var formatCards = document.getElementById('format_cards');
+
+        if (form && formatSelector && formatCards && formatCards.children.length > 0) {
+            form.style.display = 'none';
+        }
+    </script>
+    {% endif %}
+</div>
+
+<script>
+    // Script to handle dropdown change event
+    document.getElementById('format_selector').addEventListener('change', function () {
+        var selectedOption = this.value;
+        filterCards('format_cards', selectedOption);
+    });
+
+    // Function to filter cards based on selected option
+    function filterCards(containerId, selectedOption) {
+        var cards = document.querySelectorAll('#' + containerId + ' .format-card');
+        cards.forEach(function (card) {
+            var mime = card.getAttribute('data-mime');
+            var size = card.getAttribute('data-size');
+            if (selectedOption === 'all' || selectedOption === mime + '|' + size) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}
